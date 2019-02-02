@@ -5,6 +5,6 @@ src/BLE2902.cpp src/BLE2904.cpp src/BLEAddress.cpp src/BLEAdvertisedDevice.cpp s
 )
 set(COMPONENT_SRCS ${MY_BLE_SRCS})
 set(COMPONENT_ADD_INCLUDEDIRS "./src")
-set(COMPONENT_PRIV_INCLUDEDIRS ../arduino-esp32/tools/sdk/include/bt ../arduino-esp32/tools/sdk/include/config ../arduino-esp32/cores/esp32 ../arduino-esp32/tools/sdk/include/nvs_flash ../arduino-esp32/tools/sdk/include/spi_flash)
+set(COMPONENT_PRIV_INCLUDEDIRS ../arduino-esp32/tools/sdk/include/bt ../arduino-esp32/tools/sdk/include/config ../arduino-esp32/cores/esp32 ../arduino-esp32/tools/sdk/include/nvs_flash ../arduino-esp32/tools/sdk/include/spi_flash ../arduino-esp32/tools/sdk/include/newlib)
 
 register_component()

@@ -63,8 +63,10 @@ public:
 	std::string    getValue();
 	uint8_t*       getData();
 
+	bool indicate(uint16_t conn_id);
 	void indicate();
 	void notify(bool is_notification = true);
+	void notify(bool is_notification, bool sendToAll, uint16_t conn_id);
 	void setBroadcastProperty(bool value);
 	void setCallbacks(BLECharacteristicCallbacks* pCallbacks);
 	void setIndicateProperty(bool value);
@@ -116,7 +118,8 @@ private:
 	BLEService*          getService();
 	void                 setHandle(uint16_t handle);
 	FreeRTOS::Semaphore m_semaphoreCreateEvt = FreeRTOS::Semaphore("CreateEvt");
-	FreeRTOS::Semaphore m_semaphoreConfEvt   = FreeRTOS::Semaphore("ConfEvt");
+
+	std::map<uint16_t, FreeRTOS::Semaphore*> m_ConfEvt;
 }; // BLECharacteristic
 
 
@@ -131,7 +134,7 @@ class BLECharacteristicCallbacks {
 public:
 	virtual ~BLECharacteristicCallbacks();
 	virtual void onRead(BLECharacteristic* pCharacteristic);
-	virtual void onWrite(BLECharacteristic* pCharacteristic);
+	virtual void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param);
 };
 #endif /* CONFIG_BT_ENABLED */
 #endif /* COMPONENTS_CPP_UTILS_BLECHARACTERISTIC_H_ */

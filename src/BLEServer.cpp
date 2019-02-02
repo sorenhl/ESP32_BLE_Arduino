@@ -175,7 +175,9 @@ void BLEServer::handleGATTServerEvent(esp_gatts_cb_event_t event, esp_gatt_if_t 
 		//
 		case ESP_GATTS_CONNECT_EVT: {
 			m_connId = param->connect.conn_id;
+			ESP_LOGD(LOG_TAG, ">> addPeerDevice");
 			addPeerDevice((void*)this, false, m_connId);
+			ESP_LOGD(LOG_TAG, "<< addPeerDevice");
 			if (m_pServerCallbacks != nullptr) {
 				m_pServerCallbacks->onConnect(this);
 				m_pServerCallbacks->onConnect(this, param);			
@@ -214,6 +216,7 @@ void BLEServer::handleGATTServerEvent(esp_gatts_cb_event_t event, esp_gatt_if_t 
 			m_connectedCount--;                          // Decrement the number of connected devices count.
 			if (m_pServerCallbacks != nullptr) {         // If we have callbacks, call now.
 				m_pServerCallbacks->onDisconnect(this);
+				m_pServerCallbacks->onDisconnect(this, param);
 			}
 			startAdvertising(); //- do this with some delay from the loop()
 			removePeerDevice(param->disconnect.conn_id, false);
@@ -373,6 +376,12 @@ void BLEServerCallbacks::onDisconnect(BLEServer* pServer) {
 	ESP_LOGD("BLEServerCallbacks", "Device: %s", BLEDevice::toString().c_str());
 	ESP_LOGD("BLEServerCallbacks", "<< onDisconnect()");
 } // onDisconnect
+void BLEServerCallbacks::onDisconnect(BLEServer *pServer, esp_ble_gatts_cb_param_t *param)
+{
+	ESP_LOGD("BLEServerCallbacks", ">> onDisconnect(): Default");
+	ESP_LOGD("BLEServerCallbacks", "Device: %s", BLEDevice::toString().c_str());
+	ESP_LOGD("BLEServerCallbacks", "<< onDisconnect()");
+} // onDisconnect
 
 /* multi connect support */
 /* TODO do some more tweaks */
@@ -393,18 +402,27 @@ std::map<uint16_t, conn_status_t> BLEServer::getPeerDevices(bool _client) {
 uint16_t BLEServer::getPeerMTU(uint16_t conn_id) {
 	return m_connectedServersMap.find(conn_id)->second.mtu;
 }
+conn_status_t BLEServer::getStatus(uint16_t conn_id) {
+	return m_connectedServersMap.find(conn_id)->second;
+}
+
 
 void BLEServer::addPeerDevice(void* peer, bool _client, uint16_t conn_id) {
+
 	conn_status_t status = {
 		.peer_device = peer,
 		.connected = true,
-		.mtu = 23
+		.mtu = 23,
+		.ackSemaphore = new FreeRTOS::Semaphore("AckSemaphore")
 	};
 
 	m_connectedServersMap.insert(std::pair<uint16_t, conn_status_t>(conn_id, status));	
 }
 
 void BLEServer::removePeerDevice(uint16_t conn_id, bool _client) {
+	conn_status_t status = getStatus(conn_id);
+	status.ackSemaphore->give();
+	delete status.ackSemaphore;
 	m_connectedServersMap.erase(conn_id);
 }
 /* multi connect support */

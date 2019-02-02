@@ -29,6 +29,8 @@ typedef struct {
 	void *peer_device;		// peer device BLEClient or BLEServer - maybe its better to have 2 structures or union here
 	bool connected;			// do we need it?
 	uint16_t mtu;			// every peer device negotiate own mtu
+
+	FreeRTOS::Semaphore *ackSemaphore;
 } conn_status_t;
 
 
@@ -77,6 +79,9 @@ public:
 
 	/* multi connection support */
 	std::map<uint16_t, conn_status_t> getPeerDevices(bool client);
+
+	conn_status_t getStatus(uint16_t conn_id);
+
 	void addPeerDevice(void* peer, bool is_client, uint16_t conn_id);
 	void removePeerDevice(uint16_t conn_id, bool client);
 	BLEServer* getServerByConnId(uint16_t conn_id);
@@ -133,6 +138,7 @@ public:
 	 * @param [in] pServer A reference to the %BLE server that received the existing client disconnection.
 	 */
 	virtual void onDisconnect(BLEServer* pServer);
+	virtual void onDisconnect(BLEServer* pServer, esp_ble_gatts_cb_param_t *param);
 }; // BLEServerCallbacks
 
 
